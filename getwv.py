@@ -46,10 +46,11 @@ def load_vectors(fn, vectors, options):
                 if token in IGNORE:
                     continue
                 layers = d['layers']
-                if len(layers) != 1:
-                    warning('expected one layer, got {}, ignoring all '
-                            'but first'.format(len(l)))
-                values = np.array(layers[0]['values'])
+                values = []
+                for layer in layers:
+                    values.append(np.array(layer['values']))
+                # values = np.mean(values, axis=0)
+                values = np.concatenate(values, axis=0)
                 if is_continuation(token):
                     if not curr_pieces:
                         raise ValueError('line-initial "{}"'.format(token))
@@ -59,16 +60,12 @@ def load_vectors(fn, vectors, options):
                     # not continuation, i.e. new token
                     if curr_pieces:
                         save_vector(curr_pieces, curr_values, vectors)
-                        #v = np.mean(curr_values, axis=0)
-                        #vectors_by_token[curr_token].append(v)
                         total += 1
                     curr_pieces = [token]
                     curr_values = [values]
             # process last
             if curr_pieces is not None:
                 save_vector(curr_pieces, curr_values, vectors)
-                #v = np.mean(curr_values, axis=0)
-                #vectors_by_token[curr_token].append(v)
                 total += 1
     print('loaded {} vectors for {} tokens from {}'.format(
         total, len(vectors), fn), file=sys.stderr)
